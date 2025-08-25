@@ -2,14 +2,13 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 	"kasirku/models/domain"
 )
 
 type ProductCategoryRepository interface {
-	Create(ctx context.Context, tx *sql.Tx, categoryProduct domain.ProductCategory) domain.ProductCategory
-	FindAll(ctx context.Context, tx *sql.Tx) []domain.ProductCategory
-	FindById(ctx context.Context, tx *sql.Tx, categoryProductId int) domain.ProductCategory
-	Update(ctx context.Context, tx *sql.Tx, categoryProduct domain.ProductCategory) domain.ProductCategory
-	Delete(ctx context.Context, tx *sql.Tx, categoryProduct domain.ProductCategory)
-}		
+	Create(ctx context.Context, category *domain.ProductCategory) (*domain.ProductCategory, error)
+	FindAll(ctx context.Context) ([]*domain.ProductCategory, error)
+	FindById(ctx context.Context, categoryId int) (*domain.ProductCategory, error)
+	Update(ctx context.Context, category *domain.ProductCategory) (*domain.ProductCategory, error)
+	Delete(ctx context.Context, category *domain.ProductCategory) error
+}

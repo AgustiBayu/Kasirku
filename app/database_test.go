@@ -10,9 +10,12 @@ func TestDBConnetion(t *testing.T) {
 	if db == nil {
 		t.Fatal("expected db connection, got nil")
 	}
-
-	err := db.Ping()
+	sqlDB, err := db.DB()
 	if err != nil {
+		t.Fatal("Failed get *sql.DB")
+	}
+
+	if err := sqlDB.Ping(); err != nil {
 		t.Fatalf("failed to ping database: %v", err)
 	}
 }

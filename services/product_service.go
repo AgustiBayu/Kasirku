@@ -2,13 +2,13 @@ package repositories
 
 import (
 	"context"
-	"kasirku/models/web"
+	"kasirku/models/domain"
 )
 
 type ProductService interface {
-	Save(ctx context.Context, request web.ProductCategoryCreateRequest) error
-	FindAll(ctx context.Context) []web.ProductCategoryResponse
-	FindById(ctx context.Context, produkId int) web.ProductCategoryResponse
-	Update(ctx context.Context, request web.ProductCategoryUpdateRequest) error
-	Destroy(ctx context.Context, produkId int) error
+	Create(ctx context.Context, req domain.ProductCreateRequest) error
+	FindAll(ctx context.Context) ([]domain.ProductResponse, error)
+	FindById(ctx context.Context, produkId int) (domain.ProductResponse, error)
+	Update(ctx context.Context, req domain.ProductCategoryUpdateRequest) error
+	Delete(ctx context.Context, produkId int) error
 }

@@ -1,0 +1,58 @@
+package repositories
+
+import (
+	"context"
+	"kasirku/models/domain"
+
+	"gorm.io/gorm"
+)
+
+type ProductRepositoryImpl struct {
+	DB *gorm.DB
+}
+
+func NewProductRepository(db *gorm.DB) ProductRepository {
+	return &ProductRepositoryImpl{
+		DB: db,
+	}
+}
+
+func (p *ProductRepositoryImpl) Create(ctx context.Context, product *domain.Product) (*domain.Product, error) {
+	if err := p.DB.WithContext(ctx).Create(product).Error; err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+func (p *ProductRepositoryImpl) FindAll(ctx context.Context) ([]*domain.Product, map[int]*domain.ProductCategory, error) {
+	var products []*domain.Product
+	if err := p.DB.WithContext(ctx).Preload("Category").Find(&products).Error; err != nil {
+		return nil, nil, err
+	}
+	categories := make(map[int]*domain.ProductCategory)
+	for i := range products {
+		if products[i].Category.ID != 0 {
+			categories[int(products[i].Category.ID)] = &products[i].Category
+		}
+	}
+	return products, categories, nil
+}
+func (p *ProductRepositoryImpl) FindById(ctx context.Context, produkId uint) (*domain.Product, error) {
+	var product domain.Product
+	if err := p.DB.WithContext(ctx).Preload("Category").First(&product, produkId).Error; err != nil {
+		return nil, err
+
+	}
+	return &product, nil
+}
+func (p *ProductRepositoryImpl) Update(ctx context.Context, product *domain.Product) (*domain.Product, error) {
+	if err := p.DB.WithContext(ctx).Save(product).Error; err != nil {
+		return nil, err
+	}
+	return product, nil
+}
+func (p *ProductRepositoryImpl) Delete(ctx context.Context, product *domain.Product) error {
+	if err := p.DB.WithContext(ctx).Delete(product).Error; err != nil {
+		return err
+	}
+	return nil
+}

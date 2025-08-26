@@ -22,7 +22,7 @@ type ProductCreateRequest struct {
 	ID              uint                    `validate:"required" json:"id"`
 	Name            string                  `validate:"required" json:"name"`
 	Slug            string                  `validate:"required" json:"slug"`
-	Thumbnail       string                  `validate:"required" json:"thumbnail"`
+	Thumbnail       string                  `json:"thumbnail"`
 	Price           int                     `validate:"required" json:"price"`
 	Exp             string                  `validate:"required" json:"exp"`
 	ProductCategory ProductCategoryResponse `validate:"required" json:"product_category"`
@@ -42,7 +42,7 @@ type ProductUpdateRequest struct {
 	ID              uint                    `validate:"required" json:"id"`
 	Name            string                  `validate:"required" json:"name"`
 	Slug            string                  `validate:"required" json:"slug"`
-	Thumbnail       string                  `validate:"required" json:"thumbnail"`
+	Thumbnail       string                  `json:"thumbnail"`
 	Price           int                     `validate:"required" json:"price"`
 	Exp             string                  `validate:"required" json:"exp"`
 	ProductCategory ProductCategoryResponse `validate:"required" json:"product_category"`

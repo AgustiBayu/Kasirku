@@ -36,13 +36,13 @@ func (p *ProductRepositoryImpl) FindAll(ctx context.Context) ([]*domain.Product,
 	}
 	return products, categories, nil
 }
-func (p *ProductRepositoryImpl) FindById(ctx context.Context, produkId uint) (*domain.Product, error) {
+func (p *ProductRepositoryImpl) FindById(ctx context.Context, produkId uint) (*domain.Product, *domain.ProductCategory, error) {
 	var product domain.Product
 	if err := p.DB.WithContext(ctx).Preload("Category").First(&product, produkId).Error; err != nil {
-		return nil, err
+		return nil, nil, err
 
 	}
-	return &product, nil
+	return &product, &product.Category, nil
 }
 func (p *ProductRepositoryImpl) Update(ctx context.Context, product *domain.Product) (*domain.Product, error) {
 	if err := p.DB.WithContext(ctx).Save(product).Error; err != nil {
@@ -52,6 +52,17 @@ func (p *ProductRepositoryImpl) Update(ctx context.Context, product *domain.Prod
 }
 func (p *ProductRepositoryImpl) Delete(ctx context.Context, product *domain.Product) error {
 	if err := p.DB.WithContext(ctx).Delete(product).Error; err != nil {
+		return err
+	}
+	return nil
+}
+func (p *ProductRepositoryImpl) UploadThumbnail(ctx context.Context, productId uint, path string) error {
+	var product *domain.Product
+	if err := p.DB.WithContext(ctx).First(&product, productId).Error; err != nil {
+		return err
+	}
+	product.Thumbnail = path
+	if err := p.DB.WithContext(ctx).Save(&product).Error; err != nil {
 		return err
 	}
 	return nil

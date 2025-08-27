@@ -3,7 +3,11 @@
 <h2>Daftar Kategori</h2>
 <ul>
     {{ range .Categories }}
-        <li>{{ .Category }}</li>
+        <li>
+            {{ .Category }}
+            <a href="/categories/update/{{ .ID }}">Update</a>
+            <a href="/categories/delete/{{ .ID }}">Delete</a>
+        </li>
     {{ else }}
         <li>Belum ada kategori</li>
     {{ end }}

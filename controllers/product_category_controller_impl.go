@@ -22,7 +22,7 @@ func NewProductCategoryController(productCategoryService services.ProductCategor
 }
 
 func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-	tmplParsed := template.Must(template.ParseFiles("templates/layout.html", tmpl))
+	tmplParsed := template.Must(template.ParseFiles("templates/product_category/layout.html", tmpl))
 	tmplParsed.ExecuteTemplate(w, "layout.html", data)
 }
 
@@ -35,7 +35,7 @@ func (c *ProductCategoryControllerImpl) Create(w http.ResponseWriter, r *http.Re
 		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
-	renderTemplate(w, "templates/category_form.html", nil)
+	renderTemplate(w, "templates/product_category/category_form.html", nil)
 }
 
 func (c *ProductCategoryControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -43,7 +43,7 @@ func (c *ProductCategoryControllerImpl) FindAll(w http.ResponseWriter, r *http.R
 	data := map[string]interface{}{
 		"Categories": categories,
 	}
-	renderTemplate(w, "templates/category_list.html", data)
+	renderTemplate(w, "templates/product_category/category_list.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) FindById(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -53,16 +53,53 @@ func (c *ProductCategoryControllerImpl) FindById(w http.ResponseWriter, r *http.
 	data := map[string]interface{}{
 		"Category": category,
 	}
-	renderTemplate(w, "templates/category_form.html", data)
+	renderTemplate(w, "templates/product_category/category_form.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// mirip dengan Create, tapi update data
+	id, _ := strconv.Atoi(ps.ByName("id"))
+
+	if r.Method == http.MethodPost {
+		categoryValue := r.FormValue("category")
+		req := &domain.ProductCategoryUpdateRequest{
+			ID:       uint(id),
+			Category: categoryValue,
+		}
+		err := c.ProductCategoryService.Update(context.Background(), req)
+		if err != nil {
+			// Handle error appropriately, maybe show an error message in the template
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, "/categories", http.StatusSeeOther)
+		return
+	}
+
+	category, err := c.ProductCategoryService.FindById(context.Background(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	data := map[string]interface{}{
+		"Category": category,
+	}
+	renderTemplate(w, "templates/product_category/category_form.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	id, _ := strconv.Atoi(ps.ByName("id"))
-	_ = c.ProductCategoryService.Delete(context.Background(), id)
+	id, err := strconv.Atoi(ps.ByName("id"))
+	if err != nil {
+		http.Error(w, "Invalid category ID", http.StatusBadRequest)
+		return
+	}
+
+	err = c.ProductCategoryService.Delete(context.Background(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	http.Redirect(w, r, "/categories", http.StatusSeeOther)
 }

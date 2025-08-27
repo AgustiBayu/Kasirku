@@ -1,0 +1,11 @@
+{{ define "title" }}Daftar Kategori{{ end }}
+{{ define "content" }}
+<h2>Daftar Kategori</h2>
+<ul>
+    {{ range .Categories }}
+        <li>{{ .Category }}</li>
+    {{ else }}
+        <li>Belum ada kategori</li>
+    {{ end }}
+</ul>
+{{ end }}

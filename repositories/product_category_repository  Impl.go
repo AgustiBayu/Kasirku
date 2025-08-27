@@ -18,7 +18,7 @@ func NewProductCategoryRepository(db *gorm.DB) ProductCategoryRepository {
 }
 
 func (p *ProductCategoryRepositoryImpl) Create(ctx context.Context, category *domain.ProductCategory) (*domain.ProductCategory, error) {
-	if err := p.DB.WithContext(ctx).Create(&category).Error; err != nil {
+	if err := p.DB.WithContext(ctx).Create(category).Error; err != nil {
 		return nil, err
 	}
 	return category, nil

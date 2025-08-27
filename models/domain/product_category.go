@@ -9,7 +9,6 @@ type ProductCategory struct {
 }
 
 type ProductCategoryCreateRequest struct {
-	ID       uint   `validate:"required" json:"id"`
 	Category string `validate:"required" json:"category"`
 }
 

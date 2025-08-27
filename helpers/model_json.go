@@ -1,6 +1,8 @@
 package helpers
 
-import "kasirku/models/domain"
+import (
+	"kasirku/models/domain"
+)
 
 func ToProductCategoryResponse(category *domain.ProductCategory) *domain.ProductCategoryResponse {
 	return &domain.ProductCategoryResponse{

@@ -1,0 +1,39 @@
+{{ define "title" }}Product List{{ end }}
+
+{{ define "content" }}
+    <div class="container">
+        <h1>Product List</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Slug</th>
+                    <th>Thumbnail</th>
+                    <th>Price</th>
+                    <th>Exp</th>
+                    <th>Category ID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{range .}}
+                <tr>
+                    <td>{{.ID}}</td>
+                    <td>{{.Name}}</td>
+                    <td>{{.Slug}}</td>
+                    <td>{{.Thumbnail}}</td>
+                    <td>{{.Price}}</td>
+                    <td>{{.Exp}}</td>
+                    <td>{{.ProductCategory.ID}}</td>
+                    <td>
+                        <a href="/product/edit/{{.ID}}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="/product/delete/{{.ID}}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+{{ end }}
+{{ template "layout" . }}

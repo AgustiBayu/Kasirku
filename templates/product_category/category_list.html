@@ -5,7 +5,7 @@
     {{ range .Categories }}
         <li>
             {{ .Category }}
-            <a href="/categories/update/{{ .ID }}">Update</a>
+            <a href="/categories/edit/{{ .ID }}">Update</a>
             <a href="/categories/delete/{{ .ID }}">Delete</a>
         </li>
     {{ else }}

@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"context"
-	"html/template"
+	"kasirku/helpers"
 	"kasirku/models/domain"
 	"kasirku/services"
 	"net/http"
@@ -21,11 +21,6 @@ func NewProductCategoryController(productCategoryService services.ProductCategor
 	}
 }
 
-func renderTemplate(w http.ResponseWriter, tmpl string, data interface{}) {
-	tmplParsed := template.Must(template.ParseFiles("templates/product_category/layout.html", tmpl))
-	tmplParsed.ExecuteTemplate(w, "layout.html", data)
-}
-
 func (c *ProductCategoryControllerImpl) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	if r.Method == http.MethodPost {
 		category := r.FormValue("category")
@@ -35,7 +30,7 @@ func (c *ProductCategoryControllerImpl) Create(w http.ResponseWriter, r *http.Re
 		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
-	renderTemplate(w, "templates/product_category/category_form.html", nil)
+	helpers.RenderTemplate(w, "templates/product_category", "category_form_add.html", nil)
 }
 
 func (c *ProductCategoryControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -43,7 +38,7 @@ func (c *ProductCategoryControllerImpl) FindAll(w http.ResponseWriter, r *http.R
 	data := map[string]interface{}{
 		"Categories": categories,
 	}
-	renderTemplate(w, "templates/product_category/category_list.html", data)
+	helpers.RenderTemplate(w, "templates/product_category", "category_list.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) FindById(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -53,7 +48,7 @@ func (c *ProductCategoryControllerImpl) FindById(w http.ResponseWriter, r *http.
 	data := map[string]interface{}{
 		"Category": category,
 	}
-	renderTemplate(w, "templates/product_category/category_form.html", data)
+	helpers.RenderTemplate(w, "templates/product_category", "category_form_edit.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -65,8 +60,7 @@ func (c *ProductCategoryControllerImpl) Update(w http.ResponseWriter, r *http.Re
 			ID:       uint(id),
 			Category: categoryValue,
 		}
-		err := c.ProductCategoryService.Update(context.Background(), req)
-		if err != nil {
+		if err := c.ProductCategoryService.Update(context.Background(), req); err != nil {
 			// Handle error appropriately, maybe show an error message in the template
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -85,7 +79,7 @@ func (c *ProductCategoryControllerImpl) Update(w http.ResponseWriter, r *http.Re
 	data := map[string]interface{}{
 		"Category": category,
 	}
-	renderTemplate(w, "templates/product_category/category_form.html", data)
+	helpers.RenderTemplate(w, "templates/product_category", "category_form_edit.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -95,8 +89,7 @@ func (c *ProductCategoryControllerImpl) Delete(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = c.ProductCategoryService.Delete(context.Background(), id)
-	if err != nil {
+	if err = c.ProductCategoryService.Delete(context.Background(), id); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

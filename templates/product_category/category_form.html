@@ -1,8 +1,0 @@
-{{ define "title" }}Tambah Kategori{{ end }}
-{{ define "content" }}
-<h2>Tambah Kategori</h2>
-<form method="POST" action="{{ if .Category }}/categories/update/{{ .Category.ID }}{{ else }}/categories/create{{ end }}">
-    <input type="text" name="category" placeholder="Nama Kategori" required value="{{ .Category.Category }}">
-    <button type="submit">Simpan</button>
-</form>
-{{ end }}

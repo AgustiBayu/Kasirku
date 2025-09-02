@@ -34,7 +34,7 @@ func (p *ProductServiceImpl) Create(ctx context.Context, req *domain.ProductCrea
 	if err := p.Validate.Struct(req); err != nil {
 		return exception.BadRequest("field is not falid")
 	}
-	EXP, err := time.Parse("02-01-2006", req.Exp)
+	EXP, err := time.Parse("2006-01-02", req.Exp)
 	if err != nil {
 		return exception.BadRequest("invalid date format, use dd-mm-yyyy")
 	}
@@ -44,7 +44,7 @@ func (p *ProductServiceImpl) Create(ctx context.Context, req *domain.ProductCrea
 		Thumbnail:  "",
 		Price:      req.Price,
 		Exp:        EXP,
-		CategoryId: int(req.ProductCategory.ID),
+		CategoryID: req.CategoryID,
 	}
 	if _, err := p.ProductRepository.Create(ctx, &product); err != nil {
 		return exception.InternalServerError("failed to create product")
@@ -84,7 +84,7 @@ func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpda
 	product.Slug = req.Slug
 	product.Price = req.Price
 	product.Exp = EXP
-	product.CategoryId = int(req.ProductCategory.ID)
+	product.CategoryID = req.CategoryID
 	if _, err := p.ProductRepository.Update(ctx, product); err != nil {
 		return exception.InternalServerError("failed to update product")
 	}

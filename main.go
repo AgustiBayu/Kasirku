@@ -14,14 +14,18 @@ import (
 
 func main() {
 	db := app.DB()
-	db.AutoMigrate(&domain.ProductCategory{})
+	db.AutoMigrate(&domain.ProductCategory{}, &domain.Product{})
+	validate := validator.New()
 
 	productCategoryRepo := repositories.NewProductCategoryRepository(db)
-	validate := validator.New()
 	productCategoryService := services.NewProductCategoryService(productCategoryRepo, validate)
 	productCategoryController := controllers.NewProductCategoryController(productCategoryService)
-	router := routes.NewRouter(productCategoryController)
+	productRepo := repositories.NewProductRepository(db)
+	productService := services.NewProductService(productRepo, productCategoryRepo, validate)
+	productController := controllers.NewProductController(productService, productCategoryService)
 
+	router := routes.NewRouter(productCategoryController, productController)
+	router.ServeFiles("/images/*filepath", http.Dir("images"))
 	println("Server running at http://localhost:8080")
 	http.ListenAndServe(":8080", router)
 }

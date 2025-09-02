@@ -11,21 +11,20 @@ type Product struct {
 	Name       string
 	Slug       string
 	Thumbnail  string
-	Price      int
+	Price      uint
 	Exp        time.Time
-	CategoryId int
+	CategoryID uint
 	DeletedAt  gorm.DeletedAt  `gorm:"index"`
-	Category   ProductCategory `gorm:"foreignKey:CategoryId"`
+	Category   ProductCategory `gorm:"foreignKey:CategoryID"`
 }
 
 type ProductCreateRequest struct {
-	ID              uint                    `validate:"required" json:"id"`
-	Name            string                  `validate:"required" json:"name"`
-	Slug            string                  `validate:"required" json:"slug"`
-	Thumbnail       string                  `json:"thumbnail"`
-	Price           int                     `validate:"required" json:"price"`
-	Exp             string                  `validate:"required" json:"exp"`
-	ProductCategory ProductCategoryResponse `validate:"required" json:"product_category"`
+	Name       string `validate:"required" json:"name"`
+	Slug       string `validate:"required" json:"slug"`
+	Thumbnail  string `json:"thumbnail"`
+	Price      uint   `validate:"required" json:"price"`
+	Exp        string `validate:"required" json:"exp"`
+	CategoryID uint   `validate:"required" json:"category_id"`
 }
 
 type ProductResponse struct {
@@ -33,17 +32,18 @@ type ProductResponse struct {
 	Name            string                  `json:"name"`
 	Slug            string                  `json:"slug"`
 	Thumbnail       string                  `json:"thumbnail"`
-	Price           int                     `json:"price"`
+	Price           uint                    `json:"price"`
 	Exp             string                  `json:"exp"`
+	CategoryID      uint                    `json:"category_id"`
 	ProductCategory ProductCategoryResponse `json:"product_category"`
 }
 
 type ProductUpdateRequest struct {
-	ID              uint                    `validate:"required" json:"id"`
-	Name            string                  `validate:"required" json:"name"`
-	Slug            string                  `validate:"required" json:"slug"`
-	Thumbnail       string                  `json:"thumbnail"`
-	Price           int                     `validate:"required" json:"price"`
-	Exp             string                  `validate:"required" json:"exp"`
-	ProductCategory ProductCategoryResponse `validate:"required" json:"product_category"`
+	ID         uint   `validate:"required" json:"id"`
+	Name       string `validate:"required" json:"name"`
+	Slug       string `validate:"required" json:"slug"`
+	Thumbnail  string `json:"thumbnail"`
+	Price      uint   `validate:"required" json:"price"`
+	Exp        string `validate:"required" json:"exp"`
+	CategoryID uint   `validate:"required" json:"category_id"`
 }

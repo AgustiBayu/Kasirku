@@ -23,15 +23,15 @@ func (p *ProductRepositoryImpl) Create(ctx context.Context, product *domain.Prod
 	}
 	return product, nil
 }
-func (p *ProductRepositoryImpl) FindAll(ctx context.Context) ([]*domain.Product, map[int]*domain.ProductCategory, error) {
+func (p *ProductRepositoryImpl) FindAll(ctx context.Context) ([]*domain.Product, map[uint]*domain.ProductCategory, error) {
 	var products []*domain.Product
 	if err := p.DB.WithContext(ctx).Preload("Category").Find(&products).Error; err != nil {
 		return nil, nil, err
 	}
-	categories := make(map[int]*domain.ProductCategory)
+	categories := make(map[uint]*domain.ProductCategory)
 	for i := range products {
 		if products[i].Category.ID != 0 {
-			categories[int(products[i].Category.ID)] = &products[i].Category
+			categories[uint(products[i].Category.ID)] = &products[i].Category
 		}
 	}
 	return products, categories, nil

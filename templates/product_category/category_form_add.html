@@ -1,0 +1,9 @@
+{{ define "title" }}Tambah Kategori{{ end }}
+{{ define "content" }}
+<h2>Tambah Kategori</h2>
+<form method="POST" action="/categories/add">
+    <input type="text" name="category" placeholder="Nama Kategori" required>
+    <button type="submit">Simpan</button>
+</form>
+{{ end }}
+    

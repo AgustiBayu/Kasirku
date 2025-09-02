@@ -1,8 +1,6 @@
 package helpers
 
-import (
-	"kasirku/models/domain"
-)
+import "kasirku/models/domain"
 
 func ToProductCategoryResponse(category *domain.ProductCategory) *domain.ProductCategoryResponse {
 	return &domain.ProductCategoryResponse{
@@ -19,22 +17,23 @@ func ToProductCategoryResponses(categories []*domain.ProductCategory) []*domain.
 }
 func ToProductResponse(product *domain.Product, category *domain.ProductCategory) *domain.ProductResponse {
 	return &domain.ProductResponse{
-		ID:        product.ID,
-		Name:      product.Name,
-		Slug:      product.Slug,
-		Thumbnail: product.Thumbnail,
-		Price:     product.Price,
-		Exp:       FormatTanggal(product.Exp),
+		ID:         product.ID,
+		Name:       product.Name,
+		Slug:       product.Slug,
+		Thumbnail:  product.Thumbnail,
+		Price:      product.Price,
+		Exp:        FormatTanggal(product.Exp),
+		CategoryID: product.CategoryID,
 		ProductCategory: domain.ProductCategoryResponse{
 			ID:       category.ID,
 			Category: category.Category,
 		},
 	}
 }
-func ToProductResponses(producs []*domain.Product, categoriesMap map[int]*domain.ProductCategory) []*domain.ProductResponse {
+func ToProductResponses(producs []*domain.Product, categoriesMap map[uint]*domain.ProductCategory) []*domain.ProductResponse {
 	var productResponses []*domain.ProductResponse
 	for _, product := range producs {
-		category, exits := categoriesMap[product.CategoryId]
+		category, exits := categoriesMap[product.CategoryID]
 		if !exits {
 			category = &domain.ProductCategory{}
 		}

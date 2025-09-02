@@ -76,7 +76,7 @@ func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpda
 	if err != nil {
 		return exception.NotFound("id category not exists")
 	}
-	EXP, err := time.Parse("02-01-2006", req.Exp)
+	EXP, err := time.Parse("2006-01-02", req.Exp)
 	if err != nil {
 		return exception.BadRequest("invalid date format, use dd-mm-yyyy")
 	}

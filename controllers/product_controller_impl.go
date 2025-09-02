@@ -100,7 +100,10 @@ func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, p
 		req := &domain.ProductUpdateRequest{ID: uint(id), Name: name, Slug: slug,
 			Price: uint(price), Exp: exp, CategoryID: uint(categoryId)}
 
-		_ = c.ProductService.Update(context.Background(), req)
+		if err := c.ProductService.Update(context.Background(), req); err != nil {
+			http.Error(w, "Gagal memperbarui data: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
 
 		http.Redirect(w, r, "/product", http.StatusSeeOther)
 		return

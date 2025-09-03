@@ -45,6 +45,7 @@ func (p *ProductServiceImpl) Create(ctx context.Context, req *domain.ProductCrea
 		Price:      req.Price,
 		Exp:        EXP,
 		CategoryID: req.CategoryID,
+		Barcode:    req.Barcode,
 	}
 	if _, err := p.ProductRepository.Create(ctx, &product); err != nil {
 		return exception.InternalServerError("failed to create product")
@@ -68,6 +69,13 @@ func (p *ProductServiceImpl) FindById(ctx context.Context, produkId int) (*domai
 	}
 	return helpers.ToProductResponse(product, category), nil
 }
+func (p *ProductServiceImpl) FindByBarcode(ctx context.Context, barcode string) (*domain.ProductResponse, error) {
+	product, err := p.ProductRepository.FindByBarcode(ctx, barcode)
+	if err != nil {
+		return nil, exception.NotFound("barcode not exists")
+	}
+	return helpers.ToProductResponse(product, &product.Category), nil
+}
 func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpdateRequest) error {
 	if err := p.Validate.Struct(req); err != nil {
 		return exception.BadRequest("field is not falid")
@@ -84,6 +92,7 @@ func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpda
 	product.Slug = req.Slug
 	product.Price = req.Price
 	product.Exp = EXP
+	product.Barcode = req.Barcode
 	product.CategoryID = req.CategoryID
 	if _, err := p.ProductRepository.Update(ctx, product); err != nil {
 		return exception.InternalServerError("failed to update product")

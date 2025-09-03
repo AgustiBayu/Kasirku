@@ -7,10 +7,12 @@ import (
 )
 
 type ProductController interface {
-	Create(W http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	FindAll(W http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	FindById(W http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Update(W http.ResponseWriter, r *http.Request, ps httprouter.Params)
-	Delete(W http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	Create(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	FindAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	FindById(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	FindByBarcode(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	UploadThumbnail(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
+	FindAllJson(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 }

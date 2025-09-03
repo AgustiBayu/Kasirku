@@ -13,6 +13,7 @@
                     <th>Price</th>
                     <th>Exp</th>
                     <th>Category ID</th>
+                    <th>Barcode</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -26,6 +27,7 @@
                     <td>{{.Price}}</td>
                     <td>{{.Exp}}</td>
                     <td>{{.ProductCategory.ID}}</td>
+                    <td>{{.Barcode}}</td>
                     <td>
                         <a href="/product/edit/{{.ID}}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="/product/delete/{{.ID}}" class="btn btn-sm btn-danger">Delete</a>

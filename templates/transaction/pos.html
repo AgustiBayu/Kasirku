@@ -1,0 +1,265 @@
+{{ define "title" }}Point of Sale{{ end }}
+{{ define "content" }}
+<style>
+    /* Gaya spesifik untuk halaman POS */
+    body { font-family: Arial, sans-serif; display: flex; margin: 0; background-color: #f4f4f4; }
+    #left-panel { flex: 1; padding: 20px; }
+    #right-panel { flex: 1; padding: 20px; background-color: #fff; border-left: 1px solid #ccc; display: flex; flex-direction: column; }
+    #product-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+    .product-card { border: 1px solid #ddd; padding: 10px; text-align: center; cursor: pointer; background-color: #fff; }
+    .product-card:hover { background-color: #e9e9e9; }
+    #cart-items { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    #cart-items th, #cart-items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    #cart-items th { background-color: #f2f2f2; }
+    .summary { margin-top: auto; padding-top: 20px; border-top: 1px solid #ccc; }
+    .summary div { display: flex; justify-content: space-between; padding: 5px 0; }
+    #pay-button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; font-size: 1.2em; cursor: pointer; margin-top: 10px; }
+    #pay-button:disabled { background-color: #aaa; }
+</style>
+
+<div id="left-panel">
+    <h2>Products</h2>
+    <input type="text" id="product-search" placeholder="Search products..." style="width: 100%; padding: 8px; margin-bottom: 10px;">
+    <input type="text" id="barcode-scanner-input" placeholder="Scan barcode..." style="width: 100%; padding: 8px; margin-bottom: 10px;">
+    <div id="product-list"></div>
+</div>
+
+<div id="right-panel">
+    <h2>Cart</h2>
+    <table id="cart-items">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Subtotal</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+
+    <div class="summary">
+        <div>
+            <strong>Total:</strong>
+            <span id="total-amount">0</span>
+        </div>
+        <div>
+            <label for="payment-method">Payment Method:</label>
+            <select id="payment-method">
+                <option value="Cash">Cash</option>
+                <option value="Card">Qris</option>
+            </select>
+        </div>
+        <div>
+            <label for="amount-paid">Amount Paid:</label>
+            <input type="number" id="amount-paid" value="0">
+        </div>
+        <div>
+            <strong>Change:</strong>
+            <span id="change-amount">0</span>
+        </div>
+    </div>
+
+    <button id="pay-button" disabled>Pay</button>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const productListEl = document.getElementById('product-list');
+        const productSearchEl = document.getElementById('product-search');
+        const barcodeScannerInputEl = document.getElementById('barcode-scanner-input');
+        const cartItemsEl = document.querySelector('#cart-items tbody');
+        const totalAmountEl = document.getElementById('total-amount');
+        const amountPaidEl = document.getElementById('amount-paid');
+        const changeAmountEl = document.getElementById('change-amount');
+        const payButton = document.getElementById('pay-button');
+        const paymentMethodEl = document.getElementById('payment-method');
+
+        let products = [];
+        let cart = {}; // { productId: { name, price, quantity } }
+
+        // Fetch products from the API
+        async function fetchProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const result = await response.json();
+                if (result.code === 200) {
+                    products = result.data || [];
+                    renderProducts();
+                } else {
+                    alert('Error fetching products: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('Could not connect to the server to fetch products.');
+            }
+        }
+
+        // Render products to the list
+        function renderProducts(filter = '') {
+            productListEl.innerHTML = '';
+            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+            
+            filteredProducts.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.textContent = `${product.name} (Rp ${product.price})`;
+                card.dataset.productId = product.id;
+                card.addEventListener('click', () => addToCart(product.id));
+                productListEl.appendChild(card);
+            });
+        }
+
+        // Add a product to the cart
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) {
+                alert('Product not found in local list. It might need a refresh.');
+                return;
+            }
+
+            if (cart[productId]) {
+                cart[productId].quantity++;
+            } else {
+                cart[productId] = {
+                    name: product.name,
+                    price: product.price,
+                    quantity: 1
+                };
+            }
+            renderCart();
+        }
+
+        // Render the cart table and summary
+        function renderCart() {
+            cartItemsEl.innerHTML = '';
+            let total = 0;
+
+            for (const productId in cart) {
+                const item = cart[productId];
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.price}</td>
+                    <td>${item.quantity}</td>
+                    <td>${subtotal}</td>
+                    <td><button onclick="removeFromCart(${productId})">Remove</button></td>
+                `; // Use backticks (`) and template literals
+                cartItemsEl.appendChild(row);
+            }
+
+            totalAmountEl.textContent = total;
+            updateChange();
+            payButton.disabled = Object.keys(cart).length === 0;
+        }
+        // Remove item from cart (accessible from inline onclick)
+        window.removeFromCart = function(productId) {
+            if (cart[productId]) {
+                delete cart[productId];
+                renderCart();
+            }
+        }
+
+        // Update change amount
+        function updateChange() {
+            const total = parseFloat(totalAmountEl.textContent) || 0;
+            const paid = parseFloat(amountPaidEl.value) || 0;
+            const change = paid - total;
+            changeAmountEl.textContent = change >= 0 ? change : 0;
+        }
+
+        // Handle barcode scan
+        async function handleBarcodeScan(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const barcode = barcodeScannerInputEl.value.trim();
+                if (barcode === '') return;
+
+                try {
+                    const response = await fetch(`/api/products/barcode/${barcode}`);
+                    const result = await response.json();
+
+                    if (result.code === 200 && result.data) {
+                        const scannedProduct = result.data;
+                        // Ensure the product is in the local 'products' array
+                        if (!products.find(p => p.id === scannedProduct.id)) {
+                            products.push(scannedProduct);
+                        }
+                        addToCart(scannedProduct.id);
+                    } else {
+                        alert('Product with this barcode not found.');
+                    }
+                } catch (error) {
+                    console.error('Barcode scan fetch error:', error);
+                    alert('Error looking up barcode.');
+                } finally {
+                    barcodeScannerInputEl.value = ''; // Clear input for next scan
+                }
+            }
+        }
+
+        // Handle payment
+        async function handlePayment() {
+            const total = parseFloat(totalAmountEl.textContent);
+            const paid = parseFloat(amountPaidEl.value);
+
+            if (paid < total) {
+                alert('Insufficient payment!');
+                return;
+            }
+
+            const transactionData = {
+                items: Object.keys(cart).map(id => ({
+                    product_id: parseInt(id),
+                    quantity: cart[id].quantity
+                })),
+                payment_method: paymentMethodEl.value,
+                amount_paid: paid
+            };
+
+            payButton.disabled = true;
+            payButton.textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/transactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(transactionData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Transaction successful!\nChange: ${result.data.change}`);
+                    // Reset cart
+                    cart = {};
+                    amountPaidEl.value = 0;
+                    renderCart();
+                } else {
+                    alert('Transaction failed: ' + (result.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Payment error:', error);
+                alert('Could not process the transaction.');
+            } finally {
+                payButton.disabled = false;
+                payButton.textContent = 'Pay';
+            }
+        }
+
+        // Event Listeners
+        productSearchEl.addEventListener('input', (e) => renderProducts(e.target.value));
+        barcodeScannerInputEl.addEventListener('keypress', handleBarcodeScan);
+        amountPaidEl.addEventListener('input', updateChange);
+        payButton.addEventListener('click', handlePayment);
+
+        // Initial fetch
+        fetchProducts();
+    });
+</script>
+{{ end }}

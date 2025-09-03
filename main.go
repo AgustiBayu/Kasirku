@@ -14,17 +14,25 @@ import (
 
 func main() {
 	db := app.DB()
-	db.AutoMigrate(&domain.ProductCategory{}, &domain.Product{})
+	db.AutoMigrate(&domain.ProductCategory{}, &domain.Product{}, &domain.Transaction{}, &domain.TransactionDetail{})
 	validate := validator.New()
 
+	// Repositories
 	productCategoryRepo := repositories.NewProductCategoryRepository(db)
-	productCategoryService := services.NewProductCategoryService(productCategoryRepo, validate)
-	productCategoryController := controllers.NewProductCategoryController(productCategoryService)
 	productRepo := repositories.NewProductRepository(db)
-	productService := services.NewProductService(productRepo, productCategoryRepo, validate)
-	productController := controllers.NewProductController(productService, productCategoryService)
+	transactionRepo := repositories.NewTransactionRepository(db)
 
-	router := routes.NewRouter(productCategoryController, productController)
+	// Services
+	productCategoryService := services.NewProductCategoryService(productCategoryRepo, validate)
+	productService := services.NewProductService(productRepo, productCategoryRepo, validate)
+	transactionService := services.NewTransactionService(transactionRepo, productRepo, db, validate)
+
+	// Controllers
+	productCategoryController := controllers.NewProductCategoryController(productCategoryService)
+	productController := controllers.NewProductController(productService, productCategoryService)
+	transactionController := controllers.NewTransactionController(transactionService)
+
+	router := routes.NewRouter(productCategoryController, productController, transactionController)
 	router.ServeFiles("/images/*filepath", http.Dir("images"))
 	println("Server running at http://localhost:8080")
 	http.ListenAndServe(":8080", router)

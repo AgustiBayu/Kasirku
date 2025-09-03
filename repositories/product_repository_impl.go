@@ -44,6 +44,13 @@ func (p *ProductRepositoryImpl) FindById(ctx context.Context, produkId uint) (*d
 	}
 	return &product, &product.Category, nil
 }
+func (p *ProductRepositoryImpl) FindByBarcode(ctx context.Context, barcode string) (*domain.Product, error) {
+	var product domain.Product
+	if err := p.DB.WithContext(ctx).Preload("Category").Where("barcode = ?", barcode).First(&product).Error; err != nil {
+		return nil, err
+	}
+	return &product, nil
+}
 func (p *ProductRepositoryImpl) Update(ctx context.Context, product *domain.Product) (*domain.Product, error) {
 	if err := p.DB.WithContext(ctx).Save(product).Error; err != nil {
 		return nil, err

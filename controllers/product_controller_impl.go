@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"kasirku/helpers"
 	"kasirku/models/domain"
+	"kasirku/models/web"
 	"kasirku/services"
 	"net/http"
 	"strconv"
@@ -30,11 +32,12 @@ func (c *ProductControllerImpl) Create(w http.ResponseWriter, r *http.Request, p
 		priceStr := r.FormValue("price")
 		exp := r.FormValue("exp")
 		categoryIdStr := r.FormValue("category_id")
+		barcode := r.FormValue("barcode")
 
 		price, _ := strconv.Atoi(priceStr)
 		categoryId, _ := strconv.Atoi(categoryIdStr)
 		req := &domain.ProductCreateRequest{Name: name, Slug: slug,
-			Price: uint(price), Exp: exp, CategoryID: uint(categoryId)}
+			Price: uint(price), Exp: exp, CategoryID: uint(categoryId), Barcode: barcode}
 		if err := c.ProductService.Create(context.Background(), req); err != nil {
 			http.Error(w, "Gagal menyimpan data: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -55,6 +58,43 @@ func (c *ProductControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, 
 	products, _ := c.ProductService.FindAll(context.Background())
 
 	helpers.RenderTemplate(w, "templates/product", "product_list.html", products)
+}
+
+func (c *ProductControllerImpl) FindAllJson(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	products, err := c.ProductService.FindAll(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(web.WebResponse{
+		Code:    http.StatusOK,
+		Message: "Success",
+		Data:    products,
+	})
+}
+
+func (c *ProductControllerImpl) FindByBarcode(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	barcode := ps.ByName("barcode")
+
+	product, err := c.ProductService.FindByBarcode(context.Background(), barcode)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(web.WebResponse{
+			Code:    http.StatusNotFound,
+			Message: "Product not found",
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(web.WebResponse{
+		Code:    http.StatusOK,
+		Message: "Success",
+		Data:    product,
+	})
 }
 
 func (c *ProductControllerImpl) FindById(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -90,6 +130,7 @@ func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, p
 		id, _ := strconv.Atoi(idStr)
 		name := r.FormValue("name")
 		slug := r.FormValue("slug")
+		barcode := r.FormValue("barcode")
 		priceStr := r.FormValue("price")
 		exp := r.FormValue("exp")
 		categoryIdStr := r.FormValue("category_id")
@@ -97,7 +138,7 @@ func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, p
 		price, _ := strconv.Atoi(priceStr)
 		categoryId, _ := strconv.Atoi(categoryIdStr)
 
-		req := &domain.ProductUpdateRequest{ID: uint(id), Name: name, Slug: slug,
+		req := &domain.ProductUpdateRequest{ID: uint(id), Name: name, Slug: slug, Barcode: barcode,
 			Price: uint(price), Exp: exp, CategoryID: uint(categoryId)}
 
 		if err := c.ProductService.Update(context.Background(), req); err != nil {

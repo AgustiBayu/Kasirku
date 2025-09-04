@@ -21,6 +21,15 @@
     <h2>Products</h2>
     <input type="text" id="product-search" placeholder="Search products..." style="width: 100%; padding: 8px; margin-bottom: 10px;">
     <input type="text" id="barcode-scanner-input" placeholder="Scan barcode..." style="width: 100%; padding: 8px; margin-bottom: 10px;">
+    
+    <!-- Low Stock Alert Panel -->
+    <div id="low-stock-alert-panel" style="margin-bottom: 10px; border: 1px solid #ffc107; background-color: #fff3cd; padding: 10px; border-radius: 5px; display: none;">
+        <h4 style="margin-top: 0; margin-bottom: 5px; color: #856404;">Peringatan Stok Menipis (<= 5)</h4>
+        <ul id="low-stock-list" style="color: #856404; padding-left: 20px; margin-bottom: 0;">
+            <!-- Low stock items will be injected here by JS -->
+        </ul>
+    </div>
+
     <div id="product-list"></div>
 </div>
 
@@ -76,6 +85,7 @@
         const changeAmountEl = document.getElementById('change-amount');
         const payButton = document.getElementById('pay-button');
         const paymentMethodEl = document.getElementById('payment-method');
+        const lowStockListEl = document.getElementById('low-stock-list');
 
         let products = [];
         let cart = {}; // { productId: { name, price, quantity } }
@@ -333,7 +343,11 @@
                     amountPaidEl.value = 0;
                     renderCart();
                 } else {
-                    alert('Transaction failed: ' + (result.message || 'Unknown error'));
+                    if (result && result.message && result.message.includes("Insufficient stock")) {
+                        alert("Error: " + result.message);
+                    } else {
+                        alert('Transaction failed: ' + (result.message || 'Unknown error'));
+                    }
                 }
             } catch (error) {
                 console.error('Payment error:', error);
@@ -359,6 +373,33 @@
 
         // Initial fetch
         fetchProducts();
+        fetchLowStockProducts();
     });
+
+    // Fetch and display low stock products
+    async function fetchLowStockProducts() {
+        const lowStockPanelEl = document.getElementById('low-stock-alert-panel');
+        const lowStockListEl = document.getElementById('low-stock-list');
+        try {
+            const response = await fetch('/api/products/low-stock?threshold=5');
+            const result = await response.json();
+            
+            lowStockListEl.innerHTML = ''; // Clear previous list
+
+            if (result.code === 200 && result.data && result.data.length > 0) {
+                lowStockPanelEl.style.display = 'block'; // Show the panel
+                result.data.forEach(product => {
+                    const listItem = document.createElement('li');
+                    listItem.textContent = `${product.name} - Sisa: ${product.stock}`;
+                    lowStockListEl.appendChild(listItem);
+                });
+            } else {
+                lowStockPanelEl.style.display = 'none'; // Keep panel hidden
+            }
+        } catch (error) {
+            console.error('Error fetching low stock products:', error);
+            lowStockPanelEl.style.display = 'none'; // Keep panel hidden on error
+        }
+    }
 </script>
 {{ end }}

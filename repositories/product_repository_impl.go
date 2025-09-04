@@ -74,3 +74,22 @@ func (p *ProductRepositoryImpl) UploadThumbnail(ctx context.Context, productId u
 	}
 	return nil
 }
+
+func (p *ProductRepositoryImpl) UpdateStock(ctx context.Context, productId uint, newStock uint) error {
+	result := p.DB.WithContext(ctx).Model(&domain.Product{}).Where("id = ?", productId).Update("stock", newStock)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (p *ProductRepositoryImpl) FindLowStock(ctx context.Context, threshold uint) ([]*domain.Product, error) {
+	var products []*domain.Product
+	if err := p.DB.WithContext(ctx).Preload("Category").Where("stock <= ?", threshold).Find(&products).Error; err != nil {
+		return nil, err
+	}
+	return products, nil
+}

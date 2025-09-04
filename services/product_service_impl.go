@@ -44,6 +44,7 @@ func (p *ProductServiceImpl) Create(ctx context.Context, req *domain.ProductCrea
 		Thumbnail:  "",
 		Price:      req.Price,
 		Exp:        EXP,
+		Stock:      req.Stock,
 		CategoryID: req.CategoryID,
 		Barcode:    req.Barcode,
 	}
@@ -92,6 +93,7 @@ func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpda
 	product.Slug = req.Slug
 	product.Price = req.Price
 	product.Exp = EXP
+	product.Stock = req.Stock
 	product.Barcode = req.Barcode
 	product.CategoryID = req.CategoryID
 	if _, err := p.ProductRepository.Update(ctx, product); err != nil {
@@ -131,4 +133,35 @@ func (p *ProductServiceImpl) UploadThumbnail(ctx context.Context, productId uint
 		return exception.InternalServerError("failed to update product thumbnail")
 	}
 	return nil
+}
+
+func (p *ProductServiceImpl) UpdateStock(ctx context.Context, productId uint, req *domain.ProductUpdateStockRequest) error {
+	if err := p.Validate.Struct(req); err != nil {
+		return exception.BadRequest("invalid request, stock is required and must be zero or greater")
+	}
+
+	// Check if product exists
+	if _, _, err := p.ProductRepository.FindById(ctx, productId); err != nil {
+		return exception.NotFound("product not found")
+	}
+
+	if err := p.ProductRepository.UpdateStock(ctx, productId, req.Stock); err != nil {
+		return exception.InternalServerError("failed to update stock")
+	}
+
+	return nil
+}
+
+func (p *ProductServiceImpl) FindLowStock(ctx context.Context, threshold uint) ([]*domain.ProductResponse, error) {
+	products, err := p.ProductRepository.FindLowStock(ctx, threshold)
+	if err != nil {
+		return nil, exception.InternalServerError("failed to get low stock products")
+	}
+
+	var productResponses []*domain.ProductResponse
+	for _, product := range products {
+		productResponses = append(productResponses, helpers.ToProductResponse(product, &product.Category))
+	}
+
+	return productResponses, nil
 }

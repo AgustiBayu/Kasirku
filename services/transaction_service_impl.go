@@ -33,47 +33,71 @@ func (s *TransactionServiceImpl) Create(ctx context.Context, req *domain.Transac
 	}
 
 	var details []*domain.TransactionDetail
-	var totalAmount uint = 0
+	var savedTransaction *domain.Transaction
 
-	for _, item := range req.Items {
-		product, _, err := s.ProductRepo.FindById(ctx, uint(item.ProductID))
-		if err != nil {
-			return nil, exception.BadRequest("product not found")
+	err := s.DB.Transaction(func(tx *gorm.DB) error {
+		var totalAmount uint = 0
+		// 1. Validate items and check stock
+		for _, item := range req.Items {
+			product, _, err := s.ProductRepo.FindById(ctx, item.ProductID)
+			if err != nil {
+				return exception.BadRequest("product not found")
+			}
+
+			// Check if product stock is sufficient
+			if product.Stock < item.Quantity {
+				return exception.BadRequest("Insufficient stock for product: " + product.Name)
+			}
+
+			subtotal := product.Price * item.Quantity
+			totalAmount += subtotal
+
+			details = append(details, &domain.TransactionDetail{
+				ProductID:          product.ID,
+				Quantity:           item.Quantity,
+				PriceAtTransaction: product.Price,
+				Subtotal:           subtotal,
+			})
 		}
 
-		// TODO: Check if product stock is sufficient
+		if req.AmountPaid < totalAmount {
+			return exception.InternalServerError("insufficient payment amount")
+		}
 
-		subtotal := product.Price * item.Quantity
-		totalAmount += subtotal
+		change := req.AmountPaid - totalAmount
 
-		details = append(details, &domain.TransactionDetail{
-			ProductID:          product.ID,
-			Quantity:           item.Quantity,
-			PriceAtTransaction: product.Price,
-			Subtotal:           subtotal,
-		})
-	}
+		transaction := &domain.Transaction{
+			TotalAmount:   totalAmount,
+			PaymentMethod: req.PaymentMethod,
+			AmountPaid:    req.AmountPaid,
+			Change:        change,
+		}
 
-	if req.AmountPaid < totalAmount {
-		return nil, exception.InternalServerError("insufficient payment amount")
-	}
+		// 2. Create transaction record
+		var createErr error
+		savedTransaction, createErr = s.TransactionRepo.Create(ctx, transaction, details)
+		if createErr != nil {
+			return exception.InternalServerError("transaction failed")
+		}
 
-	change := req.AmountPaid - totalAmount
+		// 3. Decrease product stock after successful transaction
+		for _, item := range details {
+			product, _, err := s.ProductRepo.FindById(ctx, item.ProductID)
+			if err != nil {
+				return exception.InternalServerError("product not found during stock update")
+			}
+			newStock := product.Stock - item.Quantity
+			if err := s.ProductRepo.UpdateStock(ctx, product.ID, newStock); err != nil {
+				return exception.InternalServerError("failed to update stock")
+			}
+		}
 
-	transaction := &domain.Transaction{
-		TotalAmount:   uint(totalAmount),
-		PaymentMethod: req.PaymentMethod,
-		AmountPaid:    req.AmountPaid,
-		Change:        change,
-	}
+		return nil // Commit transaction
+	})
 
-	// The repository handles the DB transaction
-	savedTransaction, err := s.TransactionRepo.Create(ctx, transaction, details)
 	if err != nil {
-		return nil, exception.InternalServerError("transcation failed")
+		return nil, err
 	}
-
-	// TODO: Decrease product stock after successful transaction
 
 	return helpers.ToTransactionResponse(savedTransaction, details), nil
 }

@@ -25,6 +25,7 @@ func ToProductResponse(product *domain.Product, category *domain.ProductCategory
 		Thumbnail:  product.Thumbnail,
 		Price:      product.Price,
 		Exp:        FormatTanggal(product.Exp),
+		Stock:      product.Stock,
 		CategoryID: product.CategoryID,
 		ProductCategory: domain.ProductCategoryResponse{
 			ID:       category.ID,

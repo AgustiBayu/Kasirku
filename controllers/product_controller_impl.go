@@ -31,13 +31,15 @@ func (c *ProductControllerImpl) Create(w http.ResponseWriter, r *http.Request, p
 		slug := r.FormValue("slug")
 		priceStr := r.FormValue("price")
 		exp := r.FormValue("exp")
+		stockStr := r.FormValue("stock")
 		categoryIdStr := r.FormValue("category_id")
 		barcode := r.FormValue("barcode")
 
 		price, _ := strconv.Atoi(priceStr)
 		categoryId, _ := strconv.Atoi(categoryIdStr)
+		stock, _ := strconv.Atoi(stockStr)
 		req := &domain.ProductCreateRequest{Name: name, Slug: slug,
-			Price: uint(price), Exp: exp, CategoryID: uint(categoryId), Barcode: barcode}
+			Price: uint(price), Exp: exp, Stock: uint(stock), CategoryID: uint(categoryId), Barcode: barcode}
 		if err := c.ProductService.Create(context.Background(), req); err != nil {
 			http.Error(w, "Gagal menyimpan data: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -133,13 +135,15 @@ func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, p
 		barcode := r.FormValue("barcode")
 		priceStr := r.FormValue("price")
 		exp := r.FormValue("exp")
+		stockStr := r.FormValue("stock")
 		categoryIdStr := r.FormValue("category_id")
 
 		price, _ := strconv.Atoi(priceStr)
 		categoryId, _ := strconv.Atoi(categoryIdStr)
+		stock, _ := strconv.Atoi(stockStr)
 
 		req := &domain.ProductUpdateRequest{ID: uint(id), Name: name, Slug: slug, Barcode: barcode,
-			Price: uint(price), Exp: exp, CategoryID: uint(categoryId)}
+			Price: uint(price), Exp: exp, Stock: uint(stock), CategoryID: uint(categoryId)}
 
 		if err := c.ProductService.Update(context.Background(), req); err != nil {
 			http.Error(w, "Gagal memperbarui data: "+err.Error(), http.StatusInternalServerError)
@@ -188,4 +192,33 @@ func (c *ProductControllerImpl) UploadThumbnail(w http.ResponseWriter, r *http.R
 	}
 
 	http.Redirect(w, r, "/product/edit/"+idStr, http.StatusSeeOther)
+}
+
+func (c *ProductControllerImpl) FindLowStock(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	thresholdStr := r.URL.Query().Get("threshold")
+	threshold, err := strconv.Atoi(thresholdStr)
+	if err != nil || threshold <= 0 {
+		threshold = 5 // Default threshold
+	}
+
+	products, err := c.ProductService.FindLowStock(r.Context(), uint(threshold))
+	if err != nil {
+		// For now, we will use a simple error response.
+		// A better approach would be to use a centralized error handler.
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(web.WebResponse{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(web.WebResponse{
+		Code:    http.StatusOK,
+		Message: "Success",
+		Data:    products,
+	})
 }

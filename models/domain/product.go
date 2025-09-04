@@ -14,6 +14,7 @@ type Product struct {
 	Thumbnail  string
 	Price      uint
 	Exp        time.Time
+	Stock      uint
 	CategoryID uint
 	DeletedAt  gorm.DeletedAt  `gorm:"index"`
 	Category   ProductCategory `gorm:"foreignKey:CategoryID"`
@@ -26,6 +27,7 @@ type ProductCreateRequest struct {
 	Thumbnail  string `json:"thumbnail"`
 	Price      uint   `validate:"required" json:"price"`
 	Exp        string `validate:"required" json:"exp"`
+	Stock      uint   `validate:"required" json:"stock"`
 	CategoryID uint   `validate:"required" json:"category_id"`
 }
 
@@ -37,6 +39,7 @@ type ProductResponse struct {
 	Thumbnail       string                  `json:"thumbnail"`
 	Price           uint                    `json:"price"`
 	Exp             string                  `json:"exp"`
+	Stock           uint                    `json:"stock"`
 	CategoryID      uint                    `json:"category_id"`
 	ProductCategory ProductCategoryResponse `json:"category"`
 }
@@ -49,5 +52,10 @@ type ProductUpdateRequest struct {
 	Thumbnail  string `json:"thumbnail"`
 	Price      uint   `validate:"required" json:"price"`
 	Exp        string `validate:"required" json:"exp"`
+	Stock      uint   `validate:"required" json:"stock"`
 	CategoryID uint   `validate:"required" json:"category_id"`
+}
+
+type ProductUpdateStockRequest struct {
+	Stock uint `json:"stock" validate:"required,gte=0"`
 }

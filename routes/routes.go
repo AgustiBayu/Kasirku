@@ -14,6 +14,7 @@ func NewRouter(productCategoryController controllers.ProductCategoryController, 
 
 	// API Routes
 	router.GET("/api/products", productController.FindAllJson)
+	router.GET("/api/products/low-stock", productController.FindLowStock)
 	router.GET("/api/products/barcode/:barcode", productController.FindByBarcode)
 
 	// Transaction Route

@@ -37,7 +37,7 @@
             </tr>
         </thead>
         <tbody>
-            </tbody>
+        </tbody>
     </table>
 
     <div class="summary">
@@ -98,9 +98,15 @@
         }
 
         // Render products to the list
-        function renderProducts(filter = '') {
+        function renderProducts(filters = {}) {
             productListEl.innerHTML = '';
-            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(filter.toLowerCase()));
+            let filteredProducts = products;
+
+            if (filters.name) {
+                filteredProducts = products.filter(p => p.name.toLowerCase().includes(filters.name.toLowerCase()));
+            } else if (filters.barcode) {
+                filteredProducts = products.filter(p => p.barcode && p.barcode.toLowerCase().includes(filters.barcode.toLowerCase()));
+            }
             
             filteredProducts.forEach(product => {
                 const card = document.createElement('div');
@@ -123,9 +129,19 @@
             if (cart[productId]) {
                 cart[productId].quantity++;
             } else {
+                // Sanitize price to ensure it's a number for calculations
+                const price = typeof product.price === 'string'
+                    ? parseFloat(product.price.replace(/\./g, '').replace(',', '.'))
+                    : product.price;
+
+                if (isNaN(price)) {
+                    alert(`Invalid price for product: ${product.name}`);
+                    return;
+                }
+                
                 cart[productId] = {
                     name: product.name,
-                    price: product.price,
+                    price: price,
                     quantity: 1
                 };
             }
@@ -142,23 +158,26 @@
                 const subtotal = item.price * item.quantity;
                 total += subtotal;
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>${item.price}</td>
-                    <td>${item.quantity}</td>
-                    <td>${subtotal}</td>
-                    <td><button onclick="removeFromCart(${productId})">Remove</button></td>
-                `; // Use backticks (`) and template literals
-                cartItemsEl.appendChild(row);
+                const row = cartItemsEl.insertRow();
+                row.insertCell().textContent = item.name;
+                row.insertCell().textContent = item.price;
+                row.insertCell().textContent = item.quantity;
+                row.insertCell().textContent = subtotal;
+
+                const actionCell = row.insertCell();
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'Remove';
+                removeBtn.onclick = () => removeFromCart(productId); // Safer event handling
+                actionCell.appendChild(removeBtn);
             }
 
             totalAmountEl.textContent = total;
             updateChange();
             payButton.disabled = Object.keys(cart).length === 0;
         }
-        // Remove item from cart (accessible from inline onclick)
-        window.removeFromCart = function(productId) {
+
+        // Remove item from cart
+        function removeFromCart(productId) {
             if (cart[productId]) {
                 delete cart[productId];
                 renderCart();
@@ -203,6 +222,70 @@
             }
         }
 
+        // Print receipt
+        function printReceipt(details) {
+            const receiptContent = `
+                <html>
+                <head>
+                    <title>Receipt</title>
+                    <style>
+                        body { font-family: 'Courier New', Courier, monospace; width: 300px; margin: 0 auto; font-size: 12px; }
+                        h2 { text-align: center; margin-bottom: 5px; }
+                        p { margin: 2px 0; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 2px; }
+                        .text-center { text-align: center; }
+                        .text-right { text-align: right; }
+                        hr { border: none; border-top: 1px dashed #000; }
+                    </style>
+                </head>
+                <body>
+                    <h2 class="text-center">Kasirku</h2>
+                    <p class="text-center">Jl. Sayu Wiwit G.05 RT.009/Rw.009 Kec.Muncar Kota</p>
+                    <hr>
+                    <p>Date: ${new Date().toLocaleString('id-ID')}</p>
+                    ${details.transactionId ? `<p>Receipt No: ${details.transactionId}</p>` : ''}
+                    <hr>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qty</th>
+                                <th class="text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Object.values(details.cart).map(item => `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td class="text-center">${item.quantity}</td>
+                                    <td class="text-right">${(item.price * item.quantity).toLocaleString('id-ID')}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <hr>
+                    <p><strong>Total:</strong> <span style="float: right;">${details.total.toLocaleString('id-ID')}</span></p>
+                    <p><strong>Paid:</strong> <span style="float: right;">${details.paid.toLocaleString('id-ID')}</span></p>
+                    <p><strong>Change:</strong> <span style="float: right;">${details.change.toLocaleString('id-ID')}</span></p>
+                    <p><strong>Payment:</strong> <span style="float: right;">${details.paymentMethod}</span></p>
+                    <hr>
+                    <p class="text-center">Thank you!</p>
+                </body>
+                </html>
+            `;
+
+            const receiptWindow = window.open('', 'PRINT', 'height=600,width=400');
+            receiptWindow.document.write(receiptContent);
+            receiptWindow.document.close();
+            receiptWindow.focus();
+            
+            setTimeout(() => {
+                receiptWindow.print();
+                receiptWindow.close();
+            }, 250);
+        }
+
         // Handle payment
         async function handlePayment() {
             const total = parseFloat(totalAmountEl.textContent);
@@ -235,7 +318,16 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`Transaction successful!\nChange: ${result.data.change}`);
+                    const receiptDetails = {
+                        transactionId: result.data.id, // Assuming the ID is in the response
+                        cart: cart,
+                        total: total,
+                        paid: paid,
+                        change: result.data.change,
+                        paymentMethod: paymentMethodEl.value
+                    };
+                    printReceipt(receiptDetails);
+
                     // Reset cart
                     cart = {};
                     amountPaidEl.value = 0;
@@ -253,7 +345,14 @@
         }
 
         // Event Listeners
-        productSearchEl.addEventListener('input', (e) => renderProducts(e.target.value));
+        productSearchEl.addEventListener('input', (e) => {
+            barcodeScannerInputEl.value = '';
+            renderProducts({ name: e.target.value });
+        });
+        barcodeScannerInputEl.addEventListener('input', (e) => {
+            productSearchEl.value = '';
+            renderProducts({ barcode: e.target.value });
+        });
         barcodeScannerInputEl.addEventListener('keypress', handleBarcodeScan);
         amountPaidEl.addEventListener('input', updateChange);
         payButton.addEventListener('click', handlePayment);

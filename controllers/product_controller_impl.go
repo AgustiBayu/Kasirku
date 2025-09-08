@@ -35,9 +35,21 @@ func (c *ProductControllerImpl) Create(w http.ResponseWriter, r *http.Request, p
 		categoryIdStr := r.FormValue("category_id")
 		barcode := r.FormValue("barcode")
 
-		price, _ := strconv.Atoi(priceStr)
-		categoryId, _ := strconv.Atoi(categoryIdStr)
-		stock, _ := strconv.Atoi(stockStr)
+		price, err := strconv.Atoi(priceStr)
+		if err != nil {
+			http.Error(w, "Invalid price format", http.StatusBadRequest)
+			return
+		}
+		categoryId, err := strconv.Atoi(categoryIdStr)
+		if err != nil {
+			http.Error(w, "Invalid category ID format", http.StatusBadRequest)
+			return
+		}
+		stock, err := strconv.Atoi(stockStr)
+		if err != nil {
+			http.Error(w, "Invalid stock format", http.StatusBadRequest)
+			return
+		}
 		req := &domain.ProductCreateRequest{Name: name, Slug: slug,
 			Price: uint(price), Exp: exp, Stock: uint(stock), CategoryID: uint(categoryId), Barcode: barcode}
 		if err := c.ProductService.Create(context.Background(), req); err != nil {
@@ -53,13 +65,13 @@ func (c *ProductControllerImpl) Create(w http.ResponseWriter, r *http.Request, p
 	data := map[string]interface{}{
 		"Categories": categories,
 	}
-	helpers.RenderTemplate(w, "templates/product", "product_form_add.html", data)
+	helpers.RenderTemplate(w, "templates/product/product_form_add.html", data)
 }
 
 func (c *ProductControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	products, _ := c.ProductService.FindAll(context.Background())
 
-	helpers.RenderTemplate(w, "templates/product", "product_list.html", products)
+	helpers.RenderTemplate(w, "templates/product/product_list.html", map[string]interface{}{"Products": products})
 }
 
 func (c *ProductControllerImpl) FindAllJson(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -123,13 +135,24 @@ func (c *ProductControllerImpl) FindById(w http.ResponseWriter, r *http.Request,
 		"Product":    product,
 		"Categories": categories,
 	}
-	helpers.RenderTemplate(w, "templates/product", "product_form_edit.html", data)
+	helpers.RenderTemplate(w, "templates/product/product_form_edit.html", data)
 }
 
 func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	if r.Method == http.MethodPost {
 		idStr := ps.ByName("productId")
-		id, _ := strconv.Atoi(idStr)
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			http.Error(w, "Invalid product ID", http.StatusBadRequest)
+			return
+		}
+
+		err = r.ParseMultipartForm(10 << 20) // 10 MB
+		if err != nil {
+			http.Error(w, "Failed to parse multipart form", http.StatusBadRequest)
+			return
+		}
+
 		name := r.FormValue("name")
 		slug := r.FormValue("slug")
 		barcode := r.FormValue("barcode")
@@ -138,14 +161,43 @@ func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, p
 		stockStr := r.FormValue("stock")
 		categoryIdStr := r.FormValue("category_id")
 
-		price, _ := strconv.Atoi(priceStr)
-		categoryId, _ := strconv.Atoi(categoryIdStr)
-		stock, _ := strconv.Atoi(stockStr)
+		price, err := strconv.Atoi(priceStr)
+		if err != nil {
+			http.Error(w, "Invalid price format", http.StatusBadRequest)
+			return
+		}
+		categoryId, err := strconv.Atoi(categoryIdStr)
+		if err != nil {
+			http.Error(w, "Invalid category ID format", http.StatusBadRequest)
+			return
+		}
+		stock, err := strconv.Atoi(stockStr)
+		if err != nil {
+			http.Error(w, "Invalid stock format", http.StatusBadRequest)
+			return
+		}
 
-		req := &domain.ProductUpdateRequest{ID: uint(id), Name: name, Slug: slug, Barcode: barcode,
-			Price: uint(price), Exp: exp, Stock: uint(stock), CategoryID: uint(categoryId)}
+		req := &domain.ProductUpdateRequest{
+			ID:         uint(id),
+			Name:       name,
+			Slug:       slug,
+			Barcode:    barcode,
+			Price:      uint(price),
+			Exp:        exp,
+			Stock:      uint(stock),
+			CategoryID: uint(categoryId),
+		}
 
-		if err := c.ProductService.Update(context.Background(), req); err != nil {
+		file, handler, err := r.FormFile("thumbnail")
+		if err != nil && err != http.ErrMissingFile {
+			http.Error(w, "Failed to get thumbnail file", http.StatusBadRequest)
+			return
+		}
+		if file != nil {
+			defer file.Close()
+		}
+
+		if err := c.ProductService.Update(context.Background(), req, file, handler); err != nil {
 			http.Error(w, "Gagal memperbarui data: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -163,7 +215,7 @@ func (c *ProductControllerImpl) Update(w http.ResponseWriter, r *http.Request, p
 		"Product":    product,
 		"Categories": categories,
 	}
-	helpers.RenderTemplate(w, "templates/product", "product_form_edit.html", data)
+	helpers.RenderTemplate(w, "templates/product/product_form_edit.html", data)
 }
 
 func (c *ProductControllerImpl) Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -173,25 +225,6 @@ func (c *ProductControllerImpl) Delete(w http.ResponseWriter, r *http.Request, p
 	c.ProductService.Delete(context.Background(), id)
 
 	http.Redirect(w, r, "/product", http.StatusSeeOther)
-}
-
-func (c *ProductControllerImpl) UploadThumbnail(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	idStr := ps.ByName("productId")
-	id, _ := strconv.Atoi(idStr)
-
-	file, handler, err := r.FormFile("thumbnail")
-	if err != nil {
-		http.Error(w, "Gagal mengunggah file: "+err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer file.Close()
-
-	if err := c.ProductService.UploadThumbnail(context.Background(), uint(id), file, handler); err != nil {
-		http.Error(w, "Gagal menyimpan thumbnail: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	http.Redirect(w, r, "/product/edit/"+idStr, http.StatusSeeOther)
 }
 
 func (c *ProductControllerImpl) FindLowStock(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -221,4 +254,8 @@ func (c *ProductControllerImpl) FindLowStock(w http.ResponseWriter, r *http.Requ
 		Message: "Success",
 		Data:    products,
 	})
+}
+
+func (c *ProductControllerImpl) UploadThumbnail(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	//asdasd
 }

@@ -30,7 +30,7 @@ func (c *ProductCategoryControllerImpl) Create(w http.ResponseWriter, r *http.Re
 		http.Redirect(w, r, "/categories", http.StatusSeeOther)
 		return
 	}
-	helpers.RenderTemplate(w, "templates/product_category", "category_form_add.html", nil)
+	helpers.RenderTemplate(w, "templates/product_category/category_form_add.html", nil)
 }
 
 func (c *ProductCategoryControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -38,7 +38,7 @@ func (c *ProductCategoryControllerImpl) FindAll(w http.ResponseWriter, r *http.R
 	data := map[string]interface{}{
 		"Categories": categories,
 	}
-	helpers.RenderTemplate(w, "templates/product_category", "category_list.html", data)
+	helpers.RenderTemplate(w, "templates/product_category/category_list.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) FindById(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -48,7 +48,7 @@ func (c *ProductCategoryControllerImpl) FindById(w http.ResponseWriter, r *http.
 	data := map[string]interface{}{
 		"Category": category,
 	}
-	helpers.RenderTemplate(w, "templates/product_category", "category_form_edit.html", data)
+	helpers.RenderTemplate(w, "templates/product_category/category_form_edit.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) Update(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -79,7 +79,7 @@ func (c *ProductCategoryControllerImpl) Update(w http.ResponseWriter, r *http.Re
 	data := map[string]interface{}{
 		"Category": category,
 	}
-	helpers.RenderTemplate(w, "templates/product_category", "category_form_edit.html", data)
+	helpers.RenderTemplate(w, "templates/product_category/category_form_edit.html", data)
 }
 
 func (c *ProductCategoryControllerImpl) Delete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

@@ -46,5 +46,5 @@ func (c *TransactionControllerImpl) Create(w http.ResponseWriter, r *http.Reques
 }
 
 func (c *TransactionControllerImpl) ShowPOSTerminal(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	helpers.RenderTemplate(w, "templates/transaction", "pos.html", nil)
+	helpers.RenderTemplate(w, "templates/transaction/pos.html", nil)
 }

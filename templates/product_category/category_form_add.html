@@ -1,9 +1,19 @@
-{{ define "title" }}Tambah Kategori{{ end }}
+{{ define "title" }}Add Product Category{{ end }}
+
 {{ define "content" }}
-<h2>Tambah Kategori</h2>
-<form method="POST" action="/categories/add">
-    <input type="text" name="category" placeholder="Nama Kategori" required>
-    <button type="submit">Simpan</button>
-</form>
+<div class="container mt-4">
+    <h2>Add Product Category</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="/categories/add" method="POST">
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category Name</label>
+                    <input type="text" class="form-control" id="category" name="category" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/categories" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
 {{ end }}
-    

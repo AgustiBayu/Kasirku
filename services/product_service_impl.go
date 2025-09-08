@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"kasirku/exception"
 	"kasirku/helpers"
@@ -10,7 +11,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -32,11 +33,15 @@ func NewProductService(productRepository repositories.ProductRepository, product
 
 func (p *ProductServiceImpl) Create(ctx context.Context, req *domain.ProductCreateRequest) error {
 	if err := p.Validate.Struct(req); err != nil {
-		return exception.BadRequest("field is not falid")
+		var validationErrors []string
+		for _, err := range err.(validator.ValidationErrors) {
+			validationErrors = append(validationErrors, fmt.Sprintf("%s is %s", err.Field(), err.Tag()))
+		}
+		return exception.BadRequest("validation failed: " + strings.Join(validationErrors, ", "))
 	}
-	EXP, err := time.Parse("2006-01-02", req.Exp)
+	EXP, err := helpers.ParseDate(req.Exp)
 	if err != nil {
-		return exception.BadRequest("invalid date format, use dd-mm-yyyy")
+		return exception.BadRequest("invalid date format, use yyyy-mm-dd or dd-mm-yyyy")
 	}
 	product := domain.Product{
 		Name:       req.Name,
@@ -77,18 +82,25 @@ func (p *ProductServiceImpl) FindByBarcode(ctx context.Context, barcode string) 
 	}
 	return helpers.ToProductResponse(product, &product.Category), nil
 }
-func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpdateRequest) error {
+func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpdateRequest, file multipart.File, handler *multipart.FileHeader) error {
 	if err := p.Validate.Struct(req); err != nil {
-		return exception.BadRequest("field is not falid")
+		var validationErrors []string
+		for _, err := range err.(validator.ValidationErrors) {
+			validationErrors = append(validationErrors, fmt.Sprintf("%s is %s", err.Field(), err.Tag()))
+		}
+		return exception.BadRequest("validation failed: " + strings.Join(validationErrors, ", "))
 	}
+
 	product, _, err := p.ProductRepository.FindById(ctx, uint(req.ID))
 	if err != nil {
 		return exception.NotFound("id category not exists")
 	}
-	EXP, err := time.Parse("2006-01-02", req.Exp)
+
+	EXP, err := helpers.ParseDate(req.Exp)
 	if err != nil {
-		return exception.BadRequest("invalid date format, use dd-mm-yyyy")
+		return exception.BadRequest("invalid date format, use yyyy-mm-dd or dd-mm-yyyy")
 	}
+
 	product.Name = req.Name
 	product.Slug = req.Slug
 	product.Price = req.Price
@@ -96,6 +108,23 @@ func (p *ProductServiceImpl) Update(ctx context.Context, req *domain.ProductUpda
 	product.Stock = req.Stock
 	product.Barcode = req.Barcode
 	product.CategoryID = req.CategoryID
+
+	if file != nil {
+		if err := os.MkdirAll("static/images", os.ModePerm); err != nil {
+			return exception.InternalServerError("failed to create image directory")
+		}
+		filePath := filepath.Join("static/images", handler.Filename)
+		dst, err := os.Create(filePath)
+		if err != nil {
+			return exception.InternalServerError("failed to save image")
+		}
+		defer dst.Close()
+		if _, err := io.Copy(dst, file); err != nil {
+			return exception.InternalServerError("failed to copy image file")
+		}
+		product.Thumbnail = filePath
+	}
+
 	if _, err := p.ProductRepository.Update(ctx, product); err != nil {
 		return exception.InternalServerError("failed to update product")
 	}
@@ -117,10 +146,10 @@ func (p *ProductServiceImpl) UploadThumbnail(ctx context.Context, productId uint
 	if err != nil {
 		return exception.NotFound("id product not exists")
 	}
-	if err := os.MkdirAll("images", os.ModePerm); err != nil {
+	if err := os.MkdirAll("static/images", os.ModePerm); err != nil {
 		return exception.InternalServerError("failed to create image directory")
 	}
-	filePath := filepath.Join("images", handler.Filename)
+	filePath := filepath.Join("static/images", handler.Filename)
 	dst, err := os.Create(filePath)
 	if err != nil {
 		return exception.InternalServerError("failed to save image")

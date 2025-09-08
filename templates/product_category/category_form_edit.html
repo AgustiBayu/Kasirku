@@ -1,8 +1,19 @@
-{{ define "title" }}Edit Kategori{{ end }}
+{{ define "title" }}Edit Product Category{{ end }}
+
 {{ define "content" }}
-<h2>Edit Kategori</h2>
-<form method="POST" action="/categories/edit/{{ .Category.ID }}">
-    <input type="text" name="category" placeholder="Nama Kategori" required value="{{ .Category.Category }}">
-    <button type="submit">Simpan</button>
-</form>
+<div class="container mt-4">
+    <h2>Edit Product Category</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="/categories/edit/{{ .Category.ID }}" method="POST">
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category Name</label>
+                    <input type="text" class="form-control" id="category" name="category" required autofocus value="{{ .Category.Category }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+                <a href="/categories" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
 {{ end }}

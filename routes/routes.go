@@ -24,7 +24,7 @@ func protected(h httprouter.Handle) httprouter.Handle {
 func NewRouter(productCategoryController controllers.ProductCategoryController, productController controllers.ProductController, transactionController controllers.TransactionController, authController controllers.AuthController) *httprouter.Router {
 	router := httprouter.New()
 
-	router.ServeFiles("/images/*filepath", http.Dir("images"))
+	router.ServeFiles("/static/*filepath", http.Dir("static"))
 
 	// Auth routes
 	router.GET("/login", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -58,7 +58,7 @@ func NewRouter(productCategoryController controllers.ProductCategoryController, 
 	router.GET("/product/edit/:productId", protected(productController.FindById))
 	router.POST("/product/edit/:productId", protected(productController.Update))
 	router.GET("/product/delete/:productId", protected(productController.Delete))
-	router.POST("/product/upload-thumbnail/:productId", protected(productController.UploadThumbnail))
+	
 
 	return router
 }

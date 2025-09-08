@@ -1,43 +1,55 @@
-{{define "title"}}Add Product{{end}}
-{{define "content"}}
-    <div class="container">
-        <h1>Add Product</h1>
-        <form method="POST" action="/product/add">
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" class="form-control" id="name" name="name" placeholder="Name" required>
-            </div>
-            <div class="form-group">
-                <label for="slug">Slug</label>
-                <input type="text" class="form-control" id="slug" name="slug" placeholder="Slug" required>
-            </div>            
-            <div class="form-group">
-                <label for="barcode">Barcode</label>
-                <input type="text" class="form-control" id="barcode" name="barcode" placeholder="Barcode" required>
-            </div>            
-            <div class="form-group">
-                <label for="price">Price</label>
-                <input type="number" class="form-control" id="price" name="price" placeholder="Price" required>
-            </div>            
-            <div class="form-group">
-                <label for="exp">Exp</label>
-                <input type="date" class="form-control" id="exp" name="exp" required>
-            </div>
-            <div class="form-group">
-                <label for="stock">stock</label>
-                <input type="number" class="form-control" id="stock" name="stock" placeholder="Stock" required>
-            </div>
-            <div class="form-group">
-                <label for="category_id">Category</label>
-                <select class="form-control" id="category_id" name="category_id" required>
-                    <option value="">Select Category</option>
-                    {{range .Categories}}
-                        <option value="{{.ID}}">{{.Category}}</option>
-                    {{end}}
-                </select>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
+{{ define "title" }}Add Product{{ end }}
+
+{{ define "content" }}
+<div class="container mt-4">
+    <h2>Add Product</h2>
+    <div class="card">
+        <div class="card-body">
+            <form action="/product/add" method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name" class="form-label">Product Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required autofocus>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="slug" class="form-label">Slug</label>
+                        <input type="text" class="form-control" id="slug" name="slug" required autofocus>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select class="form-select" id="category_id" name="category_id" required>
+                            <option value="" disabled selected>Choose category...</option>
+                            {{range .Categories}}
+                                <option value="{{.ID}}">{{.Category}}</option>
+                            {{end}}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="price" class="form-label">Price</label>
+                        <input type="number" class="form-control" id="price" name="price" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="stock" class="form-label">Stock</label>
+                        <input type="number" class="form-control" id="stock" name="stock" required>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="barcode" class="form-label">Barcode</label>
+                        <input type="text" class="form-control" id="barcode" name="barcode">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="exp" class="form-label">Expiration Date</label>
+                        <input type="date" class="form-control" id="exp" name="exp">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/product" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
     </div>
-{{end}}
-{{template "layout" .}}
+</div>
+{{ end }}

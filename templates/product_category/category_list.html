@@ -1,15 +1,37 @@
-{{ define "title" }}Daftar Kategori{{ end }}
+{{ define "title" }}Product Categories{{ end }}
+
 {{ define "content" }}
-<h2>Daftar Kategori</h2>
-<ul>
-    {{ range .Categories }}
-        <li>
-            {{ .Category }}
-            <a href="/categories/edit/{{ .ID }}">Update</a>
-            <a href="/categories/delete/{{ .ID }}">Delete</a>
-        </li>
-    {{ else }}
-        <li>Belum ada kategori</li>
-    {{ end }}
-</ul>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Product Categories</h2>
+        <a href="/categories/add" class="btn btn-primary">Add Category</a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Category Name</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Categories }}
+                    <tr>
+                        <td>{{ .Category }}</td>
+                        <td class="text-end">
+                            <a href="/categories/edit/{{ .ID }}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="/categories/delete/{{ .ID }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this category?')">Delete</a>
+                        </td>
+                    </tr>
+                    {{ else }}
+                    <tr>
+                        <td colspan="2" class="text-center">No categories found.</td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {{ end }}

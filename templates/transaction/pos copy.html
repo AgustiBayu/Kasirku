@@ -4,95 +4,74 @@
     /* General body styling */
     body {
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
         margin: 0;
         background-color: #f0f2f5;
         color: #333;
     }
 
-    .pos-container {
-        display: flex;
-        width: 100%;
-        min-height: 100vh; /* Allow container to grow when zoomed */
-    }
-
     /* Left and right panels */
     #left-panel, #right-panel {
+        flex: 1;
         padding: 20px;
         box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        max-height: 100vh; /* Encourage internal scrolling by constraining height */
     }
 
     #left-panel {
-        flex: 3; /* 60% width */
         background-color: #fff;
         border-right: 1px solid #e0e0e0;
     }
 
     #right-panel {
-        flex: 2; /* 40% width */
         background-color: #f8f9fa;
-        overflow-y: auto; /* Allow the right panel (cart) to scroll */
+        display: flex;
+        flex-direction: column;
     }
 
     /* Product list styling */
     #product-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 20px;
-        overflow-y: auto; /* This allows the product grid to scroll */
-        padding: 10px;
-        flex-grow: 1; /* Ensure it fills the available space in the left panel */
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 10px;
     }
 
     /* Product card styling */
     .product-card {
-        border-radius: 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
         text-align: center;
         cursor: pointer;
         background-color: #fff;
         transition: transform 0.2s, box-shadow 0.2s;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.07);
-        overflow: hidden;
-        height: 300px; /* Contoh tinggi tetap, Anda bisa menyesuaikan nilainya */
-        display: flex;
-        flex-direction: column;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .product-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     .product-card img {
-        width: 100%;
-        height: 180px;
+        max-width: 100%;
+        height: 100px;
         object-fit: cover;
-        flex-shrink: 0;
-    }
-
-    .product-card .product-details {
-        padding: 15px;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
+        border-radius: 4px;
+        margin-bottom: 10px;
     }
 
     .product-card .product-name {
         font-weight: 600;
-        font-size: 1em;
-        margin-bottom: 8px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-size: 0.95em;
+        margin-bottom: 5px;
     }
 
     .product-card .product-price {
         color: #007bff;
         font-weight: bold;
-        font-size: 1.1em;
     }
 
     /* Cart styling */
@@ -115,10 +94,9 @@
 
     /* Summary section */
     .summary {
-        margin-top: auto; /* Pushes summary to the bottom */
+        margin-top: auto;
         padding-top: 20px;
         border-top: 2px solid #e0e0e0;
-        background-color: #f8f9fa; /* Ensure it has a background */
     }
 
     .summary div {
@@ -162,61 +140,59 @@
 
 </style>
 
-<div class="pos-container">
-    <div id="left-panel">
-        <h2>Products</h2>
-        <input type="text" id="product-search" placeholder="Search products...">
-        <input type="text" id="barcode-scanner-input" placeholder="Scan barcode...">    
+<div id="left-panel">
+    <h2>Products</h2>
+    <input type="text" id="product-search" placeholder="Search products...">
+    <input type="text" id="barcode-scanner-input" placeholder="Scan barcode...">    
 
-        <div id="low-stock-alert-panel" style="margin-bottom: 10px; border: 1px solid #ffc107; background-color: #fff3cd; padding: 10px; border-radius: 5px; display: none;">
-            <h4 style="margin-top: 0; margin-bottom: 5px; color: #856404;">Peringatan Stok Menipis (<= 5)</h4>
-            <ul id="low-stock-list" style="color: #856404; padding-left: 20px; margin-bottom: 0;">
-                <!-- Low stock items will be injected here by JS -->
-            </ul>
+    <div id="low-stock-alert-panel" style="margin-bottom: 10px; border: 1px solid #ffc107; background-color: #fff3cd; padding: 10px; border-radius: 5px; display: none;">
+        <h4 style="margin-top: 0; margin-bottom: 5px; color: #856404;">Peringatan Stok Menipis (<= 5)</h4>
+        <ul id="low-stock-list" style="color: #856404; padding-left: 20px; margin-bottom: 0;">
+            <!-- Low stock items will be injected here by JS -->
+        </ul>
+    </div>
+    <div id="product-list"></div>
+</div>
+
+<div id="right-panel">
+    <h2>Cart</h2>
+    <table id="cart-items">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Qty</th>
+                <th>Subtotal</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <div class="summary">
+        <div>
+            <strong>Total:</strong>
+            <span id="total-amount">0</span>
         </div>
-        <div id="product-list"></div>
+        <div>
+            <label for="payment-method">Payment Method:</label>
+            <select id="payment-method">
+                <option value="Cash">Cash</option>
+                <option value="Card">Qris</option>
+            </select>
+        </div>
+        <div>
+            <label for="amount-paid">Amount Paid:</label>
+            <input type="number" id="amount-paid" value="0">
+        </div>
+        <div>
+            <strong>Change:</strong>
+            <span id="change-amount">0</span>
+        </div>
     </div>
 
-    <div id="right-panel">
-        <h2>Payment</h2>
-        <table id="cart-items">
-            <thead>
-                <tr>
-                    <th>Product</th>
-                    <th>Price</th>
-                    <th>Qty</th>
-                    <th>Subtotal</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-
-        <div class="summary">
-            <div>
-                <strong>Total:</strong>
-                <span id="total-amount">0</span>
-            </div>
-            <div>
-                <label for="payment-method">Payment Method:</label>
-                <select id="payment-method">
-                    <option value="Cash">Cash</option>
-                    <option value="Card">Qris</option>
-                </select>
-            </div>
-            <div>
-                <label for="amount-paid">Amount Paid:</label>
-                <input type="number" id="amount-paid" value="0">
-            </div>
-            <div>
-                <strong>Change:</strong>
-                <span id="change-amount">0</span>
-            </div>
-        </div>
-
-        <button id="pay-button" disabled>Pay</button>
-    </div>
+    <button id="pay-button" disabled>Pay</button>
 </div>
 
 <script>
@@ -268,9 +244,6 @@
                 img.src = product.thumbnail ? '/' + product.thumbnail : '/static/images/placeholder.png';
                 img.alt = product.name;
 
-                const details = document.createElement('div');
-                details.className = 'product-details';
-
                 const name = document.createElement('div');
                 name.className = 'product-name';
                 name.textContent = product.name;
@@ -279,11 +252,9 @@
                 price.className = 'product-price';
                 price.textContent = `Rp ${product.price}`;
 
-                details.appendChild(name);
-                details.appendChild(price);
-
                 card.appendChild(img);
-                card.appendChild(details);
+                card.appendChild(name);
+                card.appendChild(price);
 
                 card.addEventListener('click', () => addToCart(product.id));
                 productListEl.appendChild(card);
@@ -444,7 +415,7 @@
                 lowStockPanelEl.style.display = 'block'; // Show the panel
                 result.data.forEach(product => {
                     const listItem = document.createElement('li');
-                    listItem.textContent = `${product.name} - Sisa: ${product.stock} Dengan Barcode: ${product.barcode}`;
+                    listItem.textContent = `${product.name} Dengan Barcode: ${product.barcode} - Sisa: ${product.stock}`;
                     lowStockListEl.appendChild(listItem);
                 });
             } else {

@@ -12,7 +12,10 @@
     .pos-container {
         display: flex;
         width: 100%;
-        min-height: 100vh; /* Allow container to grow when zoomed */
+        max-width: 1200px;
+        height: 100vh; /* Menggunakan height tetap agar panel anak bisa mengisi penuh */
+        margin: 0 auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
 
     /* Left and right panels */
@@ -21,13 +24,13 @@
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        max-height: 100vh; /* Encourage internal scrolling by constraining height */
     }
 
     #left-panel {
-        flex: 3; /* 60% width */
+        flex: 3;
         background-color: #fff;
-        border-right: 1px solid #e0e0e0;
+        border-right: 1px solid #e0e0e0;        
+        overflow-y: auto;
     }
 
     #right-panel {
@@ -97,9 +100,7 @@
 
     /* Cart styling */
     #cart-items {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
+        flex-grow: 1;
     }
 
     #cart-items th, #cart-items td {
@@ -158,6 +159,58 @@
         border: 1px solid #ccc;
         border-radius: 5px;
         box-sizing: border-box;
+    }
+
+    @media (max-width: 768px) {
+        .pos-container {
+            flex-direction: column; /* Mengubah tata letak menjadi satu kolom vertikal */
+            height: auto; /* Memungkinkan container untuk memanjang saat konten bertambah */
+            max-width: 100%; /* Memenuhi seluruh lebar layar di perangkat seluler */
+        }
+    
+        #left-panel, #right-panel {
+            flex: none; /* Menghapus properti flex agar panel mengambil seluruh lebar */
+            max-height: none; /* Menghapus batas tinggi */
+            overflow-y: visible; /* Memungkinkan scroll secara normal di seluruh body */
+            height: auto;
+        }
+
+        #right-panel {
+            border-top: 1px solid #e0e0e0; /* Tambahkan garis pemisah di perangkat seluler */
+        }
+        
+        #product-list {
+            /* Atur ulang tata letak grid untuk satu kolom di layar kecil jika diperlukan */
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        }
+
+        /* Tampilan keranjang untuk layar kecil */
+        #cart-items {
+            display: block;
+            width: 100%;
+        }
+
+        #cart-items tbody, #cart-items tr, #cart-items td {
+            display: block;
+            width: 100%;
+            text-align: right;
+            padding-left: 50% !important;
+            position: relative;
+        }
+
+        #cart-items td::before {
+            content: attr(data-label);
+            position: absolute;
+            left: 0;
+            width: 50%;
+            padding-left: 10px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        #cart-items thead {
+            display: none;
+        }
     }
 
 </style>
@@ -310,22 +363,35 @@
             let total = 0;
 
             for (const productId in cart) {
-                const item = cart[productId];
-                const subtotal = item.price * item.quantity;
-                total += subtotal;
+            const item = cart[productId];
+            const subtotal = item.price * item.quantity;
+            total += subtotal;
 
-                const row = cartItemsEl.insertRow();
-                row.insertCell().textContent = item.name;
-                row.insertCell().textContent = item.price;
-                row.insertCell().textContent = item.quantity;
-                row.insertCell().textContent = subtotal;
+            const row = cartItemsEl.insertRow();
+            // Tambahkan data-label untuk setiap sel
+            const cellProduct = row.insertCell();
+            cellProduct.textContent = item.name;
+            cellProduct.setAttribute('data-label', 'Product');
 
-                const actionCell = row.insertCell();
-                const removeBtn = document.createElement('button');
-                removeBtn.textContent = 'Remove';
-                removeBtn.onclick = () => removeFromCart(productId);
-                actionCell.appendChild(removeBtn);
-            }
+            const cellPrice = row.insertCell();
+            cellPrice.textContent = item.price;
+            cellPrice.setAttribute('data-label', 'Price');
+
+            const cellQty = row.insertCell();
+            cellQty.textContent = item.quantity;
+            cellQty.setAttribute('data-label', 'Qty');
+
+            const cellSubtotal = row.insertCell();
+            cellSubtotal.textContent = subtotal;
+            cellSubtotal.setAttribute('data-label', 'Subtotal');
+
+            const actionCell = row.insertCell();
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.onclick = () => removeFromCart(productId);
+            actionCell.appendChild(removeBtn);
+            actionCell.setAttribute('data-label', 'Action');
+        }
 
             totalAmountEl.textContent = total;
             updateChange();
